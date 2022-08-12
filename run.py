@@ -15,6 +15,10 @@ import pytz
 import requests
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup as BS
+import datetime
+year = datetime.datetime.now().year
+month = datetime.datetime.now().month
+day = datetime.datetime.now().day
 
 
 ua = UserAgent().random
@@ -51,7 +55,7 @@ async def news_result(html):
         try:
             url = li.a['href']
             div = li.find_all('div')[1]
-            if div.div.a.text == '易即今日' and parse_year(div.div.span.script.text) == datetime.datetime.now(pytz.timezone('Asia/Shanghai')).year:
+            if "易即今日" in str(div) and "今日简报" in str(div):
                 return url
             print(div.div.a.text, parse_year(div.div.span.script.text))
         except Exception as e:
@@ -110,11 +114,12 @@ async def getBriefing():
             for u in url_list:
                 url += u.group(1)
             url = url.replace('http', 'https')
-            # print(url)
+            print(url)
         async with session.get(url=url, params=params, ssl=False, cookies=cookies, headers=headers) as resp:
             text = await resp.text()
-            bs = BS(text, "html.parser")
-            url = bs.find('div', id='img_list').img.get('src')
+            url = re.findall("cdn_url: '(.*?)',",text)[0]
+            # bs = BS(text, "html.parser")
+            # url = bs.find('div', id='img_list').img.get('src')
 #             print(url)
         async with session.get(url=url,  ssl=False, cookies=cookies, headers=headers) as resp:
             with open('./output/img/news.jpg', 'wb') as file:
@@ -125,7 +130,7 @@ async def getBriefing():
 #                 file.write(datetime.datetime.now(pytz.timezone('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M:%S'))
 #                 file.write('\n')
 #                 file.write(f'![](./output/picture.jpg)')
-    return 'output/img/news.jpg'
+    return f'./output/img/news.jpg'
 
 
 async def toBtyes(resp):
